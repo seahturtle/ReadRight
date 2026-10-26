@@ -30,7 +30,7 @@ Built for the 2026 Congressional App Challenge (CA-10). The design comes from th
 4. Plug the iPhone in, choose it at the top of Xcode, and press ⌘R.
 5. The first time, trust the developer: Settings → General → VPN & Device Management.
 
-**Tests.** Press ⌘U. There are 37 test cases: the voice-onset detector (including the traffic light), loudness math, word matching, item lists, Echo Cave practice, the recording catalog, the data store, and the family summary's rules.
+**Tests.** Press ⌘U. There are 46 test cases: the voice-onset detector (including the traffic light), loudness math, word matching, item lists, Echo Cave practice, the recording catalog, the data store, the grown-up gate, and the family summary and referral rules.
 
 **Testing flags** (Edit Scheme → Run → Arguments):
 - `-skipSetup` skips the grown-up setup.
@@ -64,13 +64,11 @@ The Congressional App Challenge rules allow AI tools if **all AI use is disclose
 | `World/`: map, welcome and setup, Pip, path scene, island art (ported from the prototype) | Claude Code, Oct 25 |
 | `Grownups/`: family summary and its rules, activities and research tabs, settings, voice picker, Listening Lab, raw log | Claude Code, Oct 25, with research gathered by a Claude subagent |
 | `Models/`, tests, Xcode project | Claude Code, Oct 25 |
-| **Grown-up gate** (`Grownups/ParentGateView.swift`) | Team (TODO) |
-| **Privacy page** (`Grownups/PrivacyView.swift`), in your own words | Team (TODO) |
+| Grown-up gate (`Grownups/ParentGateView.swift`) and privacy page (`Grownups/PrivacyView.swift`) | Claude Code, Oct 26, at the team's request |
 | **Pip's recorded voice** (Voice Studio) | Team (TODO) |
 | App icon; testing on real iPhones and tuning; the demo video; the written answers | Team (TODO) |
 
-Find every team task with Find in Project (⌘⇧F) → `TODO(team)`.
-
+Before submitting, add a line to the AI-use log for anything you change yourselves.
 ## AI-use log
 
 Keep adding to this. Short and honest is better than vague.
@@ -80,6 +78,7 @@ Keep adding to this. Short and honest is better than vague.
 - **2026-10-25, Claude Code:** wrote the audio engine, the first three games, the data store, testing screens, tests and the Xcode project. Ran an automated code review and fixed what it found.
 - **2026-10-25, Claude Code:** redesigned the app to match the prototype. Added the traffic light, the Echo Cave and made-up-word activities, the family summary, research and settings, and a friendlier voice picker. Researched dyslexia indicators with sources.
 - **2026-10-25, Claude Code:** replaced Pip with a gentler firefly design. Added the Voice Studio for recording Pip's lines, Echo Cave practice puzzles, more made-up words, a fourth letter choice, pictures and letters instead of colors in Firefly Dash, and an "At a glance" summary. Saved the first git version.
+- **2026-10-26, Claude Code:** added the screening result and referral at the top of the summary, then ran a security check against the Challenge rules. Built the grown-up gate and the privacy page at the team's request, and pushed the project to GitHub.
 - *(add your entries: what you asked, what you used, what you changed)*
 
 ## Privacy design

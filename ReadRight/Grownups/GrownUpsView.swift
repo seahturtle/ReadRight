@@ -20,7 +20,6 @@ struct GrownUpsView: View {
             ScreenBackground()
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // TODO(team): show ParentGateView before this screen (see ParentGateView.swift).
                     VStack(alignment: .leading, spacing: 6) {
                         Eyebrow(text: "Grown-up area")
                         Text("Summary, research and settings").themed(.display, 26).foregroundStyle(Theme.ink)

@@ -1,11 +1,13 @@
 import SwiftUI
 
 /// The island map, from the prototype: four islands in any order, each showing how many fireflies
-/// were lit in this session, plus Comfort settings and the grown-up area.
+/// were lit in this session, plus Comfort settings and the grown-up area (behind the grown-up gate).
 struct LetterwoodMapView: View {
+    @Binding var path: [Route]
     @Environment(ObservationStore.self) private var store
     @Environment(ProfileStore.self) private var profiles
     @State private var showingComfort = false
+    @State private var showingGate = AppFlags.openGate
 
     var body: some View {
         ZStack {
@@ -35,8 +37,9 @@ struct LetterwoodMapView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    // TODO(team): show ParentGateView before the grown-up area.
-                    NavigationLink(value: Route.grownUps) {
+                    Button {
+                        showingGate = true
+                    } label: {
                         Label("Grown-up summary", systemImage: "chart.bar.doc.horizontal")
                     }
                     .buttonStyle(ChunkyButtonStyle(fill: Theme.sun, size: 18))
@@ -52,10 +55,19 @@ struct LetterwoodMapView: View {
                     .themed(.body, 15)
             }
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink(value: Route.grownUps) { Text("Grown-ups").themed(.body, 15) }
+                Button { showingGate = true } label: { Text("Grown-ups").themed(.body, 15) }
             }
         }
         .sheet(isPresented: $showingComfort) { ComfortSheet() }
+        .sheet(isPresented: $showingGate) {
+            ParentGateView(
+                onPass: {
+                    showingGate = false
+                    path.append(.grownUps)
+                },
+                onCancel: { showingGate = false }
+            )
+        }
     }
 
     private func steps(_ activity: Activity) -> Int {

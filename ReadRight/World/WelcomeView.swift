@@ -98,7 +98,7 @@ struct WelcomeView: View {
         }
         .sheet(isPresented: $showingPrivacy) {
             NavigationStack {
-                PrivacyView()
+                PrivacyView(showsChoices: false)
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) { Button("Done") { showingPrivacy = false } }
                     }

@@ -160,3 +160,29 @@ struct ObservationStoreTests {
         #expect(!FileManager.default.fileExists(atPath: file.path()))
     }
 }
+
+struct ParentGateTests {
+    @Test func problemsUseWordsAndNumbersFromThreeToNine() {
+        for _ in 0..<200 {
+            let problem = ParentGate.Problem.random()
+            #expect((3...9).contains(problem.left) && (3...9).contains(problem.right))
+            #expect(!problem.question.contains { $0.isNumber }, "the question must be written in words")
+        }
+    }
+
+    @Test func checksTheAnswer() {
+        let problem = ParentGate.Problem(left: 7, right: 8)
+        #expect(problem.question == "What is seven times eight?")
+        #expect(problem.isAnswered(by: "56"))
+        #expect(problem.isAnswered(by: " 56 "))
+        #expect(!problem.isAnswered(by: "54"))
+        #expect(!problem.isAnswered(by: "fifty-six"))
+    }
+
+    @Test func aWrongAnswerGetsADifferentProblem() {
+        let first = ParentGate.Problem(left: 4, right: 6)
+        for _ in 0..<50 {
+            #expect(ParentGate.Problem.random(avoiding: first) != first)
+        }
+    }
+}

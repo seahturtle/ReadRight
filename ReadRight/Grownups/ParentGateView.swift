@@ -1,29 +1,104 @@
 import SwiftUI
 
-// TODO(team): Build the grown-up gate. It keeps young children out of the grown-up area.
-//
-// Spec (from the plan):
-// - Ask a random multiplication problem written in WORDS, e.g. "What is seven times eight?",
-//   so children who can't read yet can't guess it. Use numbers 3–9 for each side.
-// - Show a number pad or a text field with `.keyboardType(.numberPad)`.
-// - Right answer → call `onPass()`. Wrong answer → show a new problem. No lockouts or scolding.
-// - It's a speed bump, not real security. The privacy screen should say that.
-// - Then use it: in TemporaryHomeView (or your map), show this before GrownUpsView.
-//   One way: a `@State var showGate = false` plus `.sheet(isPresented:)`, then push `Route.grownUps` in `onPass`.
-// - Write a unit test for your number-to-words function in ReadRightTests.
-
+/// The grown-up gate: a multiplication problem written in words ("What is seven times eight?"),
+/// so children who can't read yet, or don't know their times tables, can't open the grown-up area.
+///
+/// It's a speed bump for young children, not real security, and the privacy page says so.
+/// There's no lockout and no scolding: a wrong answer just brings a new problem.
 struct ParentGateView: View {
     var onPass: () -> Void
+    var onCancel: () -> Void
+
+    @State private var problem = ParentGate.Problem.random()
+    @State private var answer = ""
+    @State private var tries = 0
+    @FocusState private var focused: Bool
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Grown-ups only")
-                .font(.title.bold())
-            Text("TODO(team): ask a multiplication question in words here.")
-                .foregroundStyle(.secondary)
-            Button("Continue (temporary)") { onPass() }
-                .buttonStyle(.borderedProminent)
+        NavigationStack {
+            ZStack {
+                ScreenBackground()
+                VStack(alignment: .leading, spacing: 18) {
+                    Eyebrow(text: "Grown-ups only")
+                    Text("Answer this to open the grown-up area")
+                        .themed(.display, 24)
+                        .foregroundStyle(Theme.ink)
+                    Text(problem.question)
+                        .themed(.display, 28)
+                        .foregroundStyle(Theme.earth)
+                        .padding(.vertical, 4)
+                        .accessibilityAddTraits(.isHeader)
+                    TextField("Answer", text: $answer)
+                        .themed(.display, 28)
+                        .keyboardType(.numberPad)
+                        .focused($focused)
+                        .padding(14)
+                        .frame(maxWidth: 180)
+                        .background(RoundedRectangle(cornerRadius: 14).fill(Theme.panel))
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.ink, lineWidth: Theme.line))
+                        .onSubmit(check)
+                        .accessibilityLabel("Answer")
+                    if tries > 0 {
+                        Text("Not quite. Here's a new one.")
+                            .themed(.body, 15)
+                            .foregroundStyle(Theme.warnInk)
+                    }
+                    Button("Open") { check() }
+                        .buttonStyle(ChunkyButtonStyle(fill: Theme.mint, size: 20))
+                        .disabled(answer.isEmpty)
+                    Text("This keeps young children out of the summary and settings. It's a speed bump, not a password.")
+                        .themed(.body, 13)
+                        .foregroundStyle(Theme.muted)
+                    Spacer()
+                }
+                .padding(20)
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Back", action: onCancel)
+                }
+            }
         }
-        .padding()
+        .onAppear { focused = true }
+    }
+
+    private func check() {
+        if problem.isAnswered(by: answer) {
+            onPass()
+        } else {
+            tries += 1
+            answer = ""
+            problem = ParentGate.Problem.random(avoiding: problem)
+        }
+    }
+}
+
+enum ParentGate {
+    struct Problem: Equatable {
+        let left: Int
+        let right: Int
+
+        /// Numbers 3–9, so the answer is never a one-digit guess.
+        static func random(avoiding previous: Problem? = nil) -> Problem {
+            var next: Problem
+            repeat {
+                next = Problem(left: Int.random(in: 3...9), right: Int.random(in: 3...9))
+            } while next == previous
+            return next
+        }
+
+        var question: String {
+            "What is \(ParentGate.word(for: left)) times \(ParentGate.word(for: right))?"
+        }
+
+        func isAnswered(by text: String) -> Bool {
+            Int(text.trimmingCharacters(in: .whitespacesAndNewlines)) == left * right
+        }
+    }
+
+    /// Written-out numbers, so the problem can't be solved by matching digits.
+    static func word(for number: Int) -> String {
+        let words = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+        return words.indices.contains(number) ? words[number] : String(number)
     }
 }

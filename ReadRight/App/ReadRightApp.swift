@@ -47,7 +47,7 @@ struct RootView: View {
         Group {
             if profiles.profile.setupDone || AppFlags.skipSetup {
                 NavigationStack(path: $path) {
-                    LetterwoodMapView()
+                    LetterwoodMapView(path: $path)
                         .navigationDestination(for: Route.self) { route in
                             switch route {
                             case .soundSprings: SoundSpringsView()
@@ -109,6 +109,9 @@ enum AppFlags {
     /// `-skipSetup`: go straight to the map (for screenshots).
     static var skipSetup: Bool { arguments.contains("-skipSetup") }
 
+    /// `-gate`: open the grown-up gate on the map (for screenshots).
+    static var openGate: Bool { arguments.contains("-gate") }
+
     /// `-sampleSummary`: show the family summary layout example (made-up values, clearly labeled).
     static var sampleSummary: Bool { arguments.contains("-sampleSummary") }
 
@@ -126,6 +129,7 @@ enum AppFlags {
         case "log": return [.grownUps, .observationLog]
         case "voice": return [.grownUps, .pipVoice]
         case "studio": return [.grownUps, .voiceStudio]
+        case "privacy": return [.grownUps, .privacy]
         default: return []
         }
     }
