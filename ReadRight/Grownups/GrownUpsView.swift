@@ -78,6 +78,9 @@ struct GrownUpSettingsView: View {
             NavigationLink(value: Route.pipVoice) { settingsRow("Choose an iPhone voice for Pip", systemImage: "person.wave.2") }
             ComfortToggles()
 
+            Text("App icon").themed(.display, 20).foregroundStyle(Theme.ink)
+            AppIconPicker()
+
             Text("Testing tools").themed(.display, 20).foregroundStyle(Theme.ink)
             NavigationLink(value: Route.listeningLab) { settingsRow("Listening Lab", systemImage: "waveform") }
             NavigationLink(value: Route.observationLog) { settingsRow("Raw observations", systemImage: "list.bullet.rectangle") }
