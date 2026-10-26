@@ -24,7 +24,7 @@ struct GrownUpsView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Eyebrow(text: "Grown-up area")
                         Text("Summary, research and settings").themed(.display, 26).foregroundStyle(Theme.ink)
-                        Text("Everything here describes what happened during play. It's information to talk about, not a result. Only a qualified professional can assess reading difficulties, including dyslexia.")
+                        Text("Screening results from your child's play, with a recommended next step. ReadRight is a preliminary screener for early signs of dyslexia and other reading and listening difficulties, and it tells you when to see a doctor or specialist for a full diagnosis.")
                             .themed(.body, 15)
                             .foregroundStyle(Theme.inkSoft)
                     }
@@ -120,7 +120,7 @@ struct GrownUpSettingsView: View {
     }
 }
 
-/// The three choices from setup. Turning on listening asks iOS for microphone and speech permission.
+/// The choices from setup. Turning on listening asks iOS for microphone and speech permission.
 struct ChoicesEditor: View {
     @Binding var profile: Profile
     @State private var permissionNote: String?
@@ -149,11 +149,6 @@ struct ChoicesEditor: View {
             if let permissionNote {
                 Text(permissionNote).themed(.body, 14).foregroundStyle(Theme.warnInk)
             }
-            ConsentToggle(
-                isOn: $profile.allowSharing,
-                title: "Let me share the summary",
-                detail: "Adds a Share button to the summary, so you can pass it to a teacher or specialist yourself. Nothing is sent unless you choose where."
-            )
         }
     }
 

@@ -9,7 +9,9 @@ import Foundation
 /// 4. A grown-up's mark overrides the automatic word check. "Unclear" is never counted as wrong.
 /// 5. An area was "tricky today" when fewer than half of the answers Pip could judge were right.
 ///    When that happens on more than one calendar day, the summary says so, because persistence matters.
-/// 6. It never says whether a child has dyslexia.
+/// 6. It recommends a next step (see `referral`): talk to a specialist, check in, or no follow-up.
+///    It never puts a number on how likely a condition is, because these games haven't been
+///    tested against real diagnoses yet. A doctor or specialist makes the full diagnosis.
 struct FamilySummary {
     enum AreaKind: String, CaseIterable, Identifiable {
         case letterSounds, phonemeAwareness, wordReading, decoding, rapidNaming
@@ -53,9 +55,29 @@ struct FamilySummary {
     var areas: [Area] = []
     var patterns: [String] = []
     var background: [String] = []
-    var nextSteps: [String] = []
+    var referral = Referral()
 
     var isEmpty: Bool { itemsTried == 0 }
+}
+
+/// The screening result: whether to see someone, why, and who.
+struct Referral: Equatable {
+    enum Level: Equatable {
+        /// Several early signs showed up, or one keeps showing up, or one showed up and it runs in the family.
+        case seeSpecialist
+        /// One area was tricky, or several were mixed.
+        case checkIn
+        /// Early skills went smoothly.
+        case noFollowUp
+        /// Not enough islands played to say anything.
+        case notEnough
+    }
+
+    var level = Level.notEnough
+    var headline = "Not enough play yet"
+    var detail = "Play at least two islands, and ReadRight will recommend a next step."
+    var reasons: [String] = []
+    var whoToSee: [String] = []
 }
 
 extension FamilySummary.AreaKind {
@@ -145,7 +167,7 @@ enum SummaryBuilder {
         }
         summary.strengths = strengths(today)
         summary.patterns = patterns(today)
-        summary.nextSteps = nextSteps(summary, profile: profile)
+        summary.referral = referral(summary, profile: profile)
         return summary
     }
 
@@ -389,33 +411,83 @@ enum SummaryBuilder {
         return lines
     }
 
-    private static func nextSteps(_ summary: FamilySummary, profile: Profile) -> [String] {
-        var lines: [String] = []
-        let hard = summary.areas.filter(\.looksHardToday)
-        let repeated = summary.areas.filter { $0.hardDays >= 2 }
-        if hard.isEmpty {
-            lines.append("Nothing was tricky in today's play. If you still have concerns about reading, trust them and talk with your child's teacher.")
+    /// Areas that count toward the recommendation. For 5–6 year olds, reading words isn't counted,
+    /// because many children that age haven't started reading yet, and counting it would flag almost everyone.
+    static func referralAreas(for age: Profile.AgeBand) -> [FamilySummary.AreaKind] {
+        age == .fiveToSix ? [.letterSounds, .phonemeAwareness, .rapidNaming] : FamilySummary.AreaKind.allCases
+    }
+
+    /// The screening result. The rules are deliberately simple so a family, teacher or judge can check them:
+    /// - Talk to a specialist: two or more counted areas were tricky today, or one was tricky on more than
+    ///   one day, or one was tricky and reading difficulties run in the family.
+    /// - Check in: one counted area was tricky, or three or more were mixed.
+    /// - No follow-up: everything else, once at least two counted areas have enough answers.
+    static func referral(_ summary: FamilySummary, profile: Profile) -> Referral {
+        var result = Referral()
+        let counted = referralAreas(for: profile.ageBand)
+        let judged = summary.areas.filter { counted.contains($0.kind) && $0.status != .notEnough }
+        guard judged.count >= 2 else { return result }
+
+        let tricky = judged.filter { $0.status == .tricky }
+        let repeated = judged.filter { $0.hardDays >= 2 }
+        let mixed = judged.filter { $0.status == .mixed }
+        let familyHistory = profile.familyHistory == .yes
+        func names(_ areas: [FamilySummary.Area]) -> String { areas.map { $0.kind.title.lowercased() }.joined(separator: ", ") }
+
+        if tricky.count >= 2 || !repeated.isEmpty || (!tricky.isEmpty && familyHistory) {
+            result.level = .seeSpecialist
+            result.headline = "Recommended: talk to a specialist"
+            result.detail = "Early signs linked to dyslexia and other reading difficulties showed up in \(summary.nickname)'s play. A specialist can do a full evaluation and find out what's going on."
+        } else if tricky.count == 1 || mixed.count >= 3 {
+            result.level = .checkIn
+            result.headline = "Worth checking in"
+            result.detail = "Some early reading skills were tricky today. Play again on another day, and mention these results to \(summary.nickname)'s teacher."
         } else {
-            lines.append("Tricky today: \(hard.map(\.kind.title).joined(separator: ", ")). One day of play says very little on its own, so try again on another day.")
+            result.level = .noFollowUp
+            result.headline = "No signs that need follow-up today"
+            result.detail = "\(summary.nickname)'s early reading skills went smoothly today. Play again in a few weeks to watch them grow. If you or a teacher are still worried, trust that and ask."
         }
-        if !repeated.isEmpty {
-            lines.append("Tricky on more than one day: \(repeated.map(\.kind.title).joined(separator: ", ")). Things that keep showing up are worth mentioning to your child's teacher or pediatrician.")
+
+        if !tricky.isEmpty { result.reasons.append("Tricky today: \(names(tricky)). These are early skills that research links to dyslexia.") }
+        if !repeated.isEmpty { result.reasons.append("Tricky on more than one day: \(names(repeated)). Difficulties that keep showing up matter most.") }
+        if tricky.count < 1, mixed.count >= 3 { result.reasons.append("Mixed results in \(names(mixed)).") }
+        if familyHistory, result.level != .noFollowUp { result.reasons.append("Reading difficulties run in your family, which makes early signs more important to check.") }
+        if result.level == .noFollowUp { result.reasons.append("Went smoothly or nearly so: \(names(judged)).") }
+        if profile.ageBand == .fiveToSix {
+            result.reasons.append("For 5–6 year olds, reading real and made-up words isn't counted, because many children that age haven't started reading yet.")
         }
-        if !hard.isEmpty, profile.familyHistory == .yes {
-            lines.append("Because reading difficulties run in your family, it's worth sharing what you notice with your child's teacher.")
+
+        guard result.level != .noFollowUp else { return result }
+        result.whoToSee.append("Your child's teacher or school psychologist. Ask about a reading evaluation that includes dyslexia. In California, public schools screen every K–2 student for reading difficulties each year, so ask for those results too.")
+        result.whoToSee.append("Your pediatrician, who can check for other causes and refer you to a dyslexia specialist or educational psychologist for a full diagnosis.")
+        let soundsTricky = summary.areas.contains { $0.kind == .phonemeAwareness && ($0.status == .tricky || $0.status == .mixed) }
+        if soundsTricky, profile.visionHearingChecked != .yes {
+            result.whoToSee.append("A hearing check. Hearing the sounds in words was tricky, and hearing hasn't been checked recently.")
         }
-        lines.append("In California, public schools screen every student in kindergarten through 2nd grade for reading difficulties each year, and share the results with families. Ask your child's school for them.")
-        lines.append("Only a qualified professional, like a school psychologist or reading specialist, can assess dyslexia. You're welcome to bring this summary as a conversation starter.")
-        return lines
+        if profile.speechDelay == .yes {
+            result.whoToSee.append("A speech-language pathologist, since speech or language was slow to develop. They can check listening and language skills too.")
+        }
+        return result
     }
 
     // MARK: - Sharing
+
+    /// The note at the bottom of every summary.
+    static let aboutResults = "ReadRight is a preliminary screener for early signs of dyslexia and other reading and listening difficulties. Based on your child's results, it recommends when to see a doctor or specialist, who can do a full evaluation and diagnosis. Share these results with them using the button below. Results from one day can be affected by tiredness, noise or a new device, so playing again on another day makes them more reliable."
 
     /// Plain text for the Share button. Nothing is sent unless the grown-up picks where.
     static func text(_ summary: FamilySummary) -> String {
         var lines = ["ReadRight family summary for \(summary.nickname), \(summary.date.formatted(date: .long, time: .omitted))"]
         if summary.isSample { lines.append("EXAMPLE VALUES FOR LAYOUT ONLY. NOT A REAL CHILD.") }
-        lines.append("These are observations from play. They are not a test and not a diagnosis.")
+        lines.append("Screening results from ReadRight, a preliminary screener for early signs of dyslexia and other reading and listening difficulties.")
+        lines.append("")
+        lines.append("Result: \(summary.referral.headline)")
+        lines.append(summary.referral.detail)
+        lines += summary.referral.reasons.map { "- \($0)" }
+        if !summary.referral.whoToSee.isEmpty {
+            lines.append("Who to see:")
+            lines += summary.referral.whoToSee.map { "- \($0)" }
+        }
         lines.append("")
         lines.append("What went well:")
         lines += summary.strengths.map { "- \($0)" }
@@ -433,8 +505,7 @@ enum SummaryBuilder {
             lines += summary.background.map { "- \($0)" }
         }
         lines.append("")
-        lines.append("Next steps:")
-        lines += summary.nextSteps.map { "- \($0)" }
+        lines.append(aboutResults.replacingOccurrences(of: " Share these results with them using the button below.", with: ""))
         return lines.joined(separator: "\n")
     }
 
@@ -458,8 +529,8 @@ enum SummaryBuilder {
             result.append(o)
         }
         let puzzles: [(String, String, Int, WordCheck, GrownUpMark?)] = [
-            ("at", "single", 1400, .matched, nil), ("arm", "single", 1600, .matched, nil), ("nail", "cluster", 2900, .unclear, .neededHelp),
-            ("eat", "single", 1500, .matched, nil), ("top", "cluster", 3300, .unclear, .neededHelp), ("us", "single", 1700, .unclear, nil),
+            ("at", "single", 1400, .matched, nil), ("arm", "single", 2600, .unclear, .neededHelp), ("nail", "cluster", 2900, .unclear, .neededHelp),
+            ("eat", "single", 1500, .unclear, nil), ("top", "cluster", 3300, .unclear, .neededHelp), ("us", "single", 1700, .unclear, nil),
         ]
         for (word, tag, ms, check, mark) in puzzles {
             var o = ItemObservation(sessionID: session, activity: .echoCave, itemID: "ec-\(word)", target: word)

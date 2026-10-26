@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// The family summary, laid out like the team's prototype: what went well, one card for each
-/// area specialists look at (with a bar for each item), patterns that repeated, background,
-/// what the summary can't tell you, and what to do next.
+/// The family summary: the screening recommendation first, then each area at a glance, what went well,
+/// one card for each area specialists look at (with a bar for each item), patterns that repeated,
+/// background, and a Share button to send the results to a doctor or specialist.
 struct SummaryView: View {
     @Environment(ObservationStore.self) private var store
     @Environment(ProfileStore.self) private var profiles
@@ -28,6 +28,7 @@ struct SummaryView: View {
                     .background(RoundedRectangle(cornerRadius: 12).fill(Theme.warnBackground))
                 }
                 header(summary)
+                ReferralCard(referral: summary.referral)
                 AtAGlance(summary: summary)
                 card(title: "What went well", fill: Theme.soft) {
                     bulletList(summary.strengths.isEmpty ? ["Play an island to see this."] : summary.strengths)
@@ -62,30 +63,21 @@ struct SummaryView: View {
                     card(title: "Background you shared") { bulletList(summary.background) }
                 }
 
-                card(title: "What to do next", fill: Theme.soft) { bulletList(summary.nextSteps) }
-
-                card(title: "What this summary can't tell you") {
-                    bulletList([
-                        "It can't say whether a child has dyslexia or any other condition.",
-                        "Speed and first tries are affected by tiredness, shyness, noise, and how well the game was understood.",
-                        "It has no age norms. It only compares a child with themselves.",
-                        "Speech recognition is less reliable for young children, which is why unclear answers aren't counted.",
-                    ])
+                card(title: "About these results", fill: Theme.soft) {
+                    Text(SummaryBuilder.aboutResults)
+                        .themed(.body, 15)
+                        .foregroundStyle(Theme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
-                if profiles.profile.allowSharing {
-                    ShareLink(item: SummaryBuilder.text(summary)) {
-                        Label("Share summary text", systemImage: "square.and.arrow.up")
-                    }
-                    .buttonStyle(ChunkyButtonStyle(fill: Theme.mint, size: 18))
-                    Text("Nothing is sent anywhere unless you choose where.")
-                        .themed(.body, 13)
-                        .foregroundStyle(Theme.muted)
-                } else {
-                    Text("To share this summary with a teacher, turn on \"Let me share the summary\" in Your choices.")
-                        .themed(.body, 14)
-                        .foregroundStyle(Theme.muted)
+                ShareLink(item: SummaryBuilder.text(summary)) {
+                    Label("Share results with a doctor or specialist", systemImage: "square.and.arrow.up")
                 }
+                .buttonStyle(ChunkyButtonStyle(fill: Theme.mint, size: 18))
+                Text("You choose who gets it, for example by email, Messages or AirDrop. ReadRight never sends anything by itself.")
+                    .themed(.body, 13)
+                    .foregroundStyle(Theme.muted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -106,7 +98,7 @@ struct SummaryView: View {
         VStack(alignment: .leading, spacing: 6) {
             Eyebrow(text: "Family summary · \(summary.date.formatted(date: .long, time: .omitted))")
             Text("\(summary.nickname)'s walk through Letterwood").themed(.display, 26).foregroundStyle(Theme.ink)
-            Text("A snapshot of one day's play: \(summary.islandsPlayed.count) island\(summary.islandsPlayed.count == 1 ? "" : "s"), \(summary.itemsTried) tries. Children have good days and tired days, so one day says very little by itself. Everything here is an observation, not a result.")
+            Text("A snapshot of one day's play: \(summary.islandsPlayed.count) island\(summary.islandsPlayed.count == 1 ? "" : "s"), \(summary.itemsTried) tries. Children have good days and tired days, so playing again on another day makes the results more reliable.")
                 .themed(.body, 15)
                 .foregroundStyle(Theme.inkSoft)
         }
@@ -323,5 +315,74 @@ private struct AtAGlance: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
             .background(Capsule().fill(fill))
+    }
+}
+
+/// The screening result, at the top of every summary: a clear next step, why, and who to see.
+private struct ReferralCard: View {
+    let referral: Referral
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(ink)
+                VStack(alignment: .leading, spacing: 4) {
+                    Eyebrow(text: "Screening result")
+                    Text(referral.headline)
+                        .themed(.display, 21)
+                        .foregroundStyle(Theme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Text(referral.detail)
+                .themed(.body, 15)
+                .foregroundStyle(Theme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            if !referral.reasons.isEmpty {
+                Text("Why").themed(.display, 15).foregroundStyle(Theme.ink)
+                bulletList(referral.reasons)
+            }
+            if !referral.whoToSee.isEmpty {
+                Text("Who to see").themed(.display, 15).foregroundStyle(Theme.ink)
+                bulletList(referral.whoToSee)
+                Text("Use the Share button at the bottom to send these results to them.")
+                    .themed(.body, 13)
+                    .foregroundStyle(Theme.inkSoft)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(fill))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.ink, lineWidth: Theme.line))
+        .accessibilityElement(children: .combine)
+    }
+
+    private var icon: String {
+        switch referral.level {
+        case .seeSpecialist: "stethoscope"
+        case .checkIn: "hand.raised.fill"
+        case .noFollowUp: "checkmark.circle.fill"
+        case .notEnough: "ellipsis.circle"
+        }
+    }
+
+    private var ink: Color {
+        switch referral.level {
+        case .seeSpecialist: Theme.warnInk
+        case .checkIn: Theme.earth
+        case .noFollowUp: Theme.mintDark
+        case .notEnough: Theme.muted
+        }
+    }
+
+    private var fill: Color {
+        switch referral.level {
+        case .seeSpecialist: Theme.warnBackground
+        case .checkIn: Theme.soft
+        case .noFollowUp: Color(hex: 0xD9F5E9)
+        case .notEnough: Theme.background
+        }
     }
 }

@@ -21,7 +21,7 @@ struct WelcomeView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Eyebrow(text: "For the grown-up · 1 minute")
                             Text("Set up before you play").themed(.display, 24).foregroundStyle(Theme.ink)
-                            Text("ReadRight notices how a child plays: how long a choice takes, which letters get picked, and when a voice starts. It doesn't diagnose anything, and it works best with a grown-up sitting nearby.")
+                            Text("ReadRight is a preliminary screener for early signs of dyslexia and other reading and listening difficulties. It notices how a child plays, like how long a choice takes, which letters get picked and when a voice starts, and recommends when to see a doctor or specialist. It works best with a grown-up sitting nearby.")
                                 .themed(.body, 15)
                                 .foregroundStyle(Theme.inkSoft)
                         }
@@ -70,7 +70,7 @@ struct WelcomeView: View {
                         Toggle(isOn: $acknowledged) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("I'm this child's parent or guardian.").themed(.display, 16).foregroundStyle(Theme.ink)
-                                Text("I understand ReadRight is a reading game that notices patterns, not a diagnosis.")
+                                Text("I understand ReadRight is a preliminary screener, and a doctor or specialist makes a full diagnosis.")
                                     .themed(.body, 14)
                                     .foregroundStyle(Theme.inkSoft)
                             }

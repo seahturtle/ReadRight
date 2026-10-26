@@ -36,7 +36,6 @@ struct Profile: Codable, Equatable {
     // Choices. Everything starts off until a grown-up turns it on.
     var keepNotebook = false
     var listenToReading = false
-    var allowSharing = false
 
     // Optional background. Research links these to reading differences, or they change what play results mean.
     var familyHistory: Answer?
@@ -57,7 +56,6 @@ struct Profile: Codable, Equatable {
         setupDone = try c.decodeIfPresent(Bool.self, forKey: .setupDone) ?? false
         keepNotebook = try c.decodeIfPresent(Bool.self, forKey: .keepNotebook) ?? false
         listenToReading = try c.decodeIfPresent(Bool.self, forKey: .listenToReading) ?? false
-        allowSharing = try c.decodeIfPresent(Bool.self, forKey: .allowSharing) ?? false
         familyHistory = try c.decodeIfPresent(Answer.self, forKey: .familyHistory)
         speechDelay = try c.decodeIfPresent(Answer.self, forKey: .speechDelay)
         visionHearingChecked = try c.decodeIfPresent(Answer.self, forKey: .visionHearingChecked)

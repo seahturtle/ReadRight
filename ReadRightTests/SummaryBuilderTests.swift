@@ -83,7 +83,6 @@ struct SummaryBuilderTests {
         let area = summary.areas.first { $0.kind == .phonemeAwareness }
         #expect(area?.looksHardToday == true)
         #expect(area?.hardDays == 2)
-        #expect(summary.nextSteps.contains { $0.contains("more than one day") })
     }
 
     @Test func aPatternNeedsToHappenTwice() {
@@ -103,10 +102,11 @@ struct SummaryBuilderTests {
         #expect(summary.areas.count == FamilySummary.AreaKind.allCases.count)
         // No diagnosis words anywhere a family reads.
         let text = SummaryBuilder.text(summary).lowercased()
-        for word in ["diagnosed", "risk score", "at risk", "abnormal", "you have dyslexia", "has dyslexia"] {
+        for word in ["diagnosed", "risk score", "at risk", "abnormal", "you have dyslexia", "has dyslexia", "likely"] {
             #expect(!text.contains(word), "found \(word)")
         }
-        #expect(text.contains("not a diagnosis"))
+        #expect(text.contains("preliminary screener"))
+        #expect(text.contains("result: "))
     }
 
     @Test func madeUpWordsAreComparedWithTheChildsOwnRealWords() {
@@ -119,5 +119,79 @@ struct SummaryBuilderTests {
         #expect(SummaryBuilder.median([1000, 1100, 9000]) == 1100)
         #expect(SummaryBuilder.median([1000, 2000]) == 1500)
         #expect(SummaryBuilder.median([]) == nil)
+    }
+}
+
+/// The screening recommendation at the top of every summary.
+struct ReferralTests {
+    private let session = UUID()
+
+    private func profile(_ age: Profile.AgeBand = .sevenToEight, familyHistory: Profile.Answer? = nil) -> Profile {
+        var profile = Profile(nickname: "Robin")
+        profile.ageBand = age
+        profile.familyHistory = familyHistory
+        profile.visionHearingChecked = .yes
+        return profile
+    }
+
+    private func letters(firstTry: Int, of total: Int) -> [ItemObservation] {
+        (0..<total).map { index in
+            var o = ItemObservation(sessionID: session, activity: .soundSprings, itemID: "ss-\(index)", target: "w\(index)")
+            o.firstTry = index < firstTry
+            o.tries = index < firstTry ? 1 : 2
+            o.responseMs = 2000
+            return o
+        }
+    }
+
+    private func spoken(_ activity: Activity, right: Int, of total: Int, tag: String = "single") -> [ItemObservation] {
+        (0..<total).map { index in
+            var o = ItemObservation(sessionID: session, activity: activity, itemID: "\(activity.rawValue)-\(index)", target: "w\(index)")
+            o.itemTag = tag
+            o.onsetMs = 1500
+            o.wordCheck = index < right ? .matched : .unclear
+            o.grownUpMark = index < right ? nil : .neededHelp
+            return o
+        }
+    }
+
+    @Test func smoothPlayNeedsNoFollowUp() {
+        let observations = letters(firstTry: 8, of: 8) + spoken(.echoCave, right: 6, of: 6)
+        let referral = SummaryBuilder.build(from: observations, profile: profile()).referral
+        #expect(referral.level == .noFollowUp)
+        #expect(referral.whoToSee.isEmpty)
+    }
+
+    @Test func twoTrickyAreasRecommendASpecialist() {
+        let observations = letters(firstTry: 2, of: 8) + spoken(.echoCave, right: 1, of: 6)
+        let referral = SummaryBuilder.build(from: observations, profile: profile()).referral
+        #expect(referral.level == .seeSpecialist)
+        #expect(referral.whoToSee.contains { $0.contains("pediatrician") })
+        #expect(referral.whoToSee.contains { $0.contains("dyslexia") })
+    }
+
+    @Test func oneTrickyAreaIsACheckInUnlessItRunsInTheFamily() {
+        let observations = letters(firstTry: 8, of: 8) + spoken(.echoCave, right: 1, of: 6)
+        #expect(SummaryBuilder.build(from: observations, profile: profile()).referral.level == .checkIn)
+        #expect(SummaryBuilder.build(from: observations, profile: profile(familyHistory: .yes)).referral.level == .seeSpecialist)
+    }
+
+    @Test func wordReadingIsNotCountedForFiveAndSixYearOlds() {
+        let observations = letters(firstTry: 8, of: 8) + spoken(.echoCave, right: 6, of: 6) + spoken(.wordWoods, right: 0, of: 6, tag: "short")
+        #expect(SummaryBuilder.build(from: observations, profile: profile(.fiveToSix)).referral.level == .noFollowUp)
+        #expect(SummaryBuilder.build(from: observations, profile: profile(.sevenToEight)).referral.level == .checkIn)
+    }
+
+    @Test func oneIslandIsNotEnoughToRecommendAnything() {
+        let referral = SummaryBuilder.build(from: letters(firstTry: 1, of: 8), profile: profile()).referral
+        #expect(referral.level == .notEnough)
+    }
+
+    @Test func trickySoundPuzzlesSuggestAHearingCheckWhenHearingWasNotChecked() {
+        var noHearingCheck = profile()
+        noHearingCheck.visionHearingChecked = .notSure
+        let observations = letters(firstTry: 2, of: 8) + spoken(.echoCave, right: 1, of: 6)
+        let referral = SummaryBuilder.build(from: observations, profile: noHearingCheck).referral
+        #expect(referral.whoToSee.contains { $0.contains("hearing check") })
     }
 }

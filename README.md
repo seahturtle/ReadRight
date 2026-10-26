@@ -1,6 +1,6 @@
 # ReadRight
 
-ReadRight is an iPhone game that helps families notice reading patterns worth talking about with a teacher or specialist. It measures the early skills reading specialists check, using on-device timing and speech recognition, and it never diagnoses.
+ReadRight is an iPhone game that works as a preliminary screener for early signs of dyslexia and other reading and listening difficulties. It measures the early skills reading specialists check, using on-device timing and speech recognition, and recommends when a family should see a doctor or specialist for a full diagnosis.
 
 Children walk through Letterwood with Pip and visit four islands. Each island observes one or two of the skills that research links to dyslexia:
 
@@ -13,7 +13,7 @@ Children walk through Letterwood with Pip and visit four islands. Each island ob
 
 A **traffic light** tells the child when to talk. Amber ("Get ready…") means the microphone is learning the room's quiet. Green ("Your turn!") means the word is on screen and timing has started.
 
-The **grown-up area** has a family summary organized by those skills. It shows a bar for each item, compared only with the child's own middle time, and lists patterns only when they happen twice. It says when an area looked hard today or on more than one day. It also has an explanation of each activity, the research behind the app, and settings. The summary never says whether a child has dyslexia.
+The **grown-up area** opens with a **screening result**: "Recommended: talk to a specialist", "Worth checking in", or "No signs that need follow-up today". It lists the reasons and who to see: a teacher or school psychologist, a pediatrician, a dyslexia specialist, and a hearing check or speech-language pathologist when the listening results call for it. Below that come an "At a glance" table, a card for each skill with a bar per item (compared only with the child's own middle time), patterns that happened twice or more, and a **Share** button that sends the results to the family's doctor or specialist. The recommendation rules are at the top of `SummaryBuilder.referral`. The summary doesn't estimate how likely a condition is, because the games haven't been tested against real diagnoses yet.
 
 Built for the 2026 Congressional App Challenge (CA-10). The design comes from the team's web prototype.
 
