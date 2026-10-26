@@ -25,9 +25,15 @@ struct FamilySummary {
         let note: String?
     }
 
+    /// The one-word answer shown "at a glance". Speed is never judged, because there are no age norms.
+    enum Status: Equatable {
+        case smooth, mixed, tricky, notEnough
+    }
+
     struct Area: Identifiable {
         let kind: AreaKind
         var id: AreaKind { kind }
+        var status = Status.notEnough
         var observed: [String] = []
         var bars: [Bar] = []
         var medianMs: Int?
@@ -89,7 +95,7 @@ extension FamilySummary.AreaKind {
         case .phonemeAwareness: "Hearing and changing the small sounds inside spoken words. It's one of the strongest early links to learning to read."
         case .wordReading: "Reading short, common words out loud."
         case .decoding: "Sounding out words that can't be memorized, so they show how a child uses letter sounds."
-        case .rapidNaming: "Saying the names of familiar things, here colors, quickly and smoothly."
+        case .rapidNaming: "Saying the names of familiar things, here pictures or letters, quickly and smoothly."
         }
     }
 }
@@ -133,6 +139,7 @@ enum SummaryBuilder {
             guard !todays.isEmpty else { continue }
             var area = makeArea(kind, todays, all: all, nickname: profile.nickname)
             area.looksHardToday = looksHard(kind, todays)
+            area.status = status(kind, todays, hard: area.looksHardToday)
             area.hardDays = days.filter { looksHard(kind, observations(for: kind, in: Array($0))) }.count
             summary.areas.append(area)
         }
@@ -150,6 +157,25 @@ enum SummaryBuilder {
         case .wordReading: observations.filter { $0.activity == .wordWoods && $0.itemTag != madeUp }
         case .decoding: observations.filter { $0.activity == .wordWoods && $0.itemTag == madeUp }
         case .rapidNaming: observations.filter { $0.activity == .fireflyDash }
+        }
+    }
+
+    /// Smooth: at least 3 out of 4 judged answers were right. Tricky: fewer than half (see `looksHard`).
+    /// In between: mixed. Too few judged answers: not enough to say.
+    static func status(_ kind: FamilySummary.AreaKind, _ observations: [ItemObservation], hard: Bool) -> FamilySummary.Status {
+        if hard { return .tricky }
+        switch kind {
+        case .letterSounds:
+            guard observations.count >= 4 else { return .notEnough }
+            let right = observations.filter { $0.firstTry == true }.count
+            return right * 4 >= observations.count * 3 ? .smooth : .mixed
+        case .phonemeAwareness, .wordReading, .decoding:
+            let known = observations.map(judge).filter { $0 != .unknown }
+            guard known.count >= (kind == .decoding ? 2 : 3) else { return .notEnough }
+            return known.filter { $0 == .yes }.count * 4 >= known.count * 3 ? .smooth : .mixed
+        case .rapidNaming:
+            guard let named = observations.max(by: { $0.recordedAt < $1.recordedAt })?.namedAll else { return .notEnough }
+            return named == .all ? .smooth : .mixed
         }
     }
 
@@ -456,7 +482,7 @@ enum SummaryBuilder {
             o.grownUpMark = mark
             result.append(o)
         }
-        var dash = ItemObservation(sessionID: session, activity: .fireflyDash, itemID: "fd-grid-1", target: "20 colors")
+        var dash = ItemObservation(sessionID: session, activity: .fireflyDash, itemID: "fd-pictures", target: "20 pictures")
         dash.onsetMs = 900
         dash.namingMs = 31000
         dash.namedAll = .all

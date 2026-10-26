@@ -19,7 +19,7 @@ enum Activity: String, Codable, CaseIterable, Identifiable {
         case .soundSprings: "Match sounds to letters"
         case .echoCave: "Play with the sounds in words"
         case .wordWoods: "Read little words out loud"
-        case .fireflyDash: "Say the colors, fast!"
+        case .fireflyDash: "Name the pictures, fast!"
         }
     }
 }

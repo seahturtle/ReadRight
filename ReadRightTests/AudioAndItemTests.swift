@@ -35,7 +35,8 @@ struct ItemBankTests {
     @Test func soundSpringsChoicesAreFair() {
         for item in ItemBank.soundSprings {
             #expect(item.word.hasPrefix(item.answer), "\(item.word) should start with \(item.answer)")
-            #expect(Set(item.choices).count == 3, "\(item.word) needs 3 different letters")
+            #expect(Set(item.choices).count == 4, "\(item.word) needs 4 different letters")
+            #expect(!item.distractors.contains { ["c", "k", "s"].contains($0.letter) && (item.answer == "c" || item.answer == "s") }, "\(item.word): no letter that can spell the same sound")
             #expect(!item.distractors.map(\.letter).contains(item.answer))
         }
     }
@@ -53,6 +54,22 @@ struct ItemBankTests {
         }
     }
 
+    @Test func echoCaveStartsWithPracticeThatIsNeverRecorded() {
+        #expect(ItemBank.echoCavePractice.count == 2)
+        #expect(ItemBank.echoCavePractice.allSatisfy { $0.isPractice })
+        for age in Profile.AgeBand.allCases {
+            #expect(!ItemBank.echoCave(for: age).contains { $0.isPractice })
+        }
+    }
+
+    @Test func everyLinePipSaysCanBeRecorded() {
+        let lines = PipLines.catalog
+        #expect(Set(lines.map(\.text)).count == lines.count)
+        #expect(Set(lines.map { VoiceClips.key(for: $0.text) }).count == lines.count, "two lines share a recording file")
+        #expect(lines.contains { $0.text == "bus" })
+        #expect(lines.contains { $0.text == PipLines.echoCavePrompt("snail") })
+    }
+
     @Test(arguments: Profile.AgeBand.allCases)
     func echoCaveAnswersAreTheWordWithoutItsStart(age: Profile.AgeBand) throws {
         for item in ItemBank.echoCave(for: age) {
@@ -65,12 +82,16 @@ struct ItemBankTests {
         #expect(ItemBank.echoCave(for: age).contains { $0.tag == .cluster })
     }
 
-    @Test func fireflyGridIsBalancedWithNoRepeats() {
-        let grid = ItemBank.fireflyGrid
+    @Test(arguments: Profile.AgeBand.allCases)
+    func fireflyGridIsBalancedWithNoRepeats(age: Profile.AgeBand) {
+        let grid = ItemBank.fireflyGrid(for: age)
         #expect(grid.count == 20)
-        for color in FireflyColor.allCases {
-            #expect(grid.filter { $0 == color }.count == 4, "\(color) should appear 4 times")
+        for item in ItemBank.namingSet(for: age) {
+            #expect(grid.filter { $0 == item }.count == 4, "\(item) should appear 4 times")
         }
+        #expect(Set(ItemBank.fireflyPractice(for: age)) == Set(ItemBank.namingSet(for: age)))
+        // Pictures for 5-6, letters for 7-8, as in standard rapid-naming tests.
+        #expect(grid.allSatisfy { $0.isLetter == (age == .sevenToEight) })
         for index in 1..<grid.count {
             #expect(grid[index] != grid[index - 1], "repeat at position \(index)")
         }

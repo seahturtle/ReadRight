@@ -24,7 +24,7 @@ struct ReadRightApp: App {
 }
 
 enum Route: Hashable {
-    case soundSprings, echoCave, wordWoods, fireflyDash, grownUps, listeningLab, observationLog, pipVoice, privacy
+    case soundSprings, echoCave, wordWoods, fireflyDash, grownUps, listeningLab, observationLog, pipVoice, voiceStudio, privacy
 
     init(_ activity: Activity) {
         switch activity {
@@ -58,6 +58,7 @@ struct RootView: View {
                             case .listeningLab: ListeningLabView()
                             case .observationLog: ObservationLogView()
                             case .pipVoice: PipVoiceView()
+                            case .voiceStudio: VoiceStudioView()
                             case .privacy: PrivacyView()
                             }
                         }
@@ -124,6 +125,7 @@ enum AppFlags {
         case "lab": return [.grownUps, .listeningLab]
         case "log": return [.grownUps, .observationLog]
         case "voice": return [.grownUps, .pipVoice]
+        case "studio": return [.grownUps, .voiceStudio]
         default: return []
         }
     }

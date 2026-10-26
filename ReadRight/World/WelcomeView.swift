@@ -130,7 +130,7 @@ struct WelcomeView: View {
 
             Eyebrow(text: "A reading adventure, about 8 minutes")
             Text("Walk through Letterwood with Pip").themed(.display, 34).foregroundStyle(Theme.ink)
-            Text("Hop across stepping stones while you match sounds, solve sound puzzles, read little words and name colors. Every try lights a firefly. There are no lives, no timers on screen, and nothing to lose.")
+            Text("Hop across stepping stones while you match sounds, solve sound puzzles, read little words and name pictures. Every try lights a firefly. There are no lives, no timers on screen, and nothing to lose.")
                 .themed(.body, 17)
                 .foregroundStyle(Theme.inkSoft)
             HStack(spacing: 8) {

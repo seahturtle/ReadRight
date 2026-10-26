@@ -13,7 +13,7 @@ struct SoundSpringsView: View {
         GameScaffold(activity: .soundSprings, step: model.lit, total: model.items.count) {
             switch model.phase {
             case .intro:
-                PipSays("Hi, I'm Pip! Listen to the word, then tap the letter it starts with.")
+                PipSays(PipLines.soundSpringsIntro)
                 Button("Start") { Task { await model.start() } }
                     .buttonStyle(ChunkyButtonStyle(fill: Theme.mint, size: 24))
 
@@ -39,7 +39,7 @@ struct SoundSpringsView: View {
                         .disabled(model.phase != .choosing)
                     }
                 }
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     ForEach(model.choices, id: \.self) { letter in
                         Button(letter) { Task { await model.tap(letter) } }
                             .buttonStyle(ChoiceStyle(look: model.look(for: letter)))
@@ -92,8 +92,8 @@ final class SoundSpringsModel {
     private let speaker = Speaker.shared
     private let clock = ContinuousClock()
 
-    private static let cheers = ["Hop! You lit a firefly.", "Nice listening. Off we go!", "You did it. Another firefly!", "Lovely thinking. Hop on!"]
-    private static let wobbleLines = ["Almost! Let's listen again.", "That stone wobbled. Try another one.", "Good try. Have another look."]
+    private static let cheers = PipLines.soundSpringsCheers
+    private static let wobbleLines = PipLines.soundSpringsWobbles
 
     var item: LetterItem { items[index] }
 
@@ -110,7 +110,7 @@ final class SoundSpringsModel {
     }
 
     func introduce() async {
-        await speaker.say("Hi, I'm Pip! Listen to the word, then tap the letter it starts with.")
+        await speaker.say(PipLines.soundSpringsIntro)
     }
 
     func start() async {
@@ -150,7 +150,7 @@ final class SoundSpringsModel {
             if tries >= 2, hintLetter == nil {
                 hintLetter = item.answer
                 bubble = "Here's a hint. This stone is glowing. Tap it to hop."
-                await speaker.say("\(item.word) starts with \(item.answer).")
+                await speaker.say(PipLines.soundSpringsHint(item))
             } else {
                 bubble = Self.wobbleLines[(index + tries) % Self.wobbleLines.count]
                 await speaker.say(bubble)
@@ -191,7 +191,7 @@ final class SoundSpringsModel {
             await present()
         } else {
             phase = .finished
-            await speaker.say("Sound Springs visited! Every firefly counts.")
+            await speaker.say(PipLines.soundSpringsDone)
         }
     }
 

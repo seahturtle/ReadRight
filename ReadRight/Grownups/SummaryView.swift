@@ -28,6 +28,7 @@ struct SummaryView: View {
                     .background(RoundedRectangle(cornerRadius: 12).fill(Theme.warnBackground))
                 }
                 header(summary)
+                AtAGlance(summary: summary)
                 card(title: "What went well", fill: Theme.soft) {
                     bulletList(summary.strengths.isEmpty ? ["Play an island to see this."] : summary.strengths)
                 }
@@ -270,5 +271,57 @@ private struct DashedLine: Shape {
             path.move(to: CGPoint(x: rect.midX, y: rect.minY))
             path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
         }
+    }
+}
+
+/// The five areas in one small table, so a grown-up can see in a few seconds what went smoothly
+/// and what was tricky. Each status has an icon and words, never color alone.
+private struct AtAGlance: View {
+    let summary: FamilySummary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("At a glance").themed(.display, 18).foregroundStyle(Theme.ink)
+            ForEach(FamilySummary.AreaKind.allCases) { kind in
+                HStack(spacing: 8) {
+                    Text(kind.title)
+                        .themed(.body, 15)
+                        .foregroundStyle(Theme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 8)
+                    if let area = summary.areas.first(where: { $0.kind == kind }) {
+                        badge(for: area)
+                    } else {
+                        Label("Not played yet", systemImage: "circle.dashed")
+                            .themed(.body, 13)
+                            .foregroundStyle(Theme.muted)
+                    }
+                }
+                .accessibilityElement(children: .combine)
+            }
+            Text("Smooth: at least 3 out of 4 answers right. Tricky: fewer than half. Speed is never judged, because ReadRight has no age norms.")
+                .themed(.body, 12)
+                .foregroundStyle(Theme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.panel))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.ink, lineWidth: 2))
+    }
+
+    private func badge(for area: FamilySummary.Area) -> some View {
+        let (text, icon, ink, fill): (String, String, Color, Color) = switch area.status {
+        case .smooth: (area.kind == .rapidNaming ? "Named them all" : "Went smoothly", "checkmark.circle.fill", Theme.mintDark, Color(hex: 0xD9F5E9))
+        case .mixed: ("Some tricky ones", "circle.lefthalf.filled", Theme.inkSoft, Theme.soft)
+        case .tricky: (area.hardDays >= 2 ? "Tricky on \(area.hardDays) days" : "Tricky today", "info.circle", Theme.warnInk, Theme.warnBackground)
+        case .notEnough: ("Not enough to say", "ellipsis.circle", Theme.muted, Theme.background)
+        }
+        return Label(text, systemImage: icon)
+            .themed(.body, 13)
+            .foregroundStyle(ink)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(fill))
     }
 }

@@ -32,7 +32,7 @@ struct EvidenceView: View {
             url: "https://sapientia.ualg.pt/entities/publication/26e2bd16-bf52-4ab5-81f8-9d00a7381976/full",
             supports: "How quickly children name familiar things (colors, objects, letters) is moderately related to reading (r = .43).",
             cannot: "Slow naming alone isn't dyslexia, and shyness or speech can slow it down.",
-            use: "Firefly Dash times how long it takes to name 20 colored fireflies."
+            use: "Firefly Dash times how long it takes to name 20 fireflies carrying pictures (ages 5–6) or letters (ages 7–8)."
         ),
         Source(
             citation: "Meta-analysis of the nonword reading deficit in specific reading disorder (34 studies). PubMed.",
@@ -175,10 +175,10 @@ struct ActivitiesExplainerView: View {
         ),
         Row(
             activity: .fireflyDash,
-            childDoes: "Practices one row, then names 20 colored fireflies as fast as they can.",
-            pipSays: "“When the light turns green, say every color, row by row!”",
-            observed: "Time to the first color, total naming time from the first voice to the last, and whether they named all 20.",
-            cannot: "Whether a time is quick or slow for their age, because ReadRight has no age norms. Color naming can be hard for color-blind children."
+            childDoes: "Practices one row, then names 20 fireflies carrying pictures (ages 5–6) or letters (ages 7–8) as fast as they can.",
+            pipSays: "“When the light turns green, say every one, row by row. Then tap I'm done.”",
+            observed: "Time to the first name, total naming time from the first voice to the last, and whether they named all 20.",
+            cannot: "Whether a time is quick or slow for their age, because ReadRight has no age norms. Pictures and letters are used instead of colors, which are unfair to color-blind children."
         ),
     ]
 

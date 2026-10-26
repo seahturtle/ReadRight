@@ -75,7 +75,8 @@ struct GrownUpSettingsView: View {
             BackgroundEditor(profile: $profiles.profile)
 
             Text("Pip and comfort").themed(.display, 20).foregroundStyle(Theme.ink)
-            NavigationLink(value: Route.pipVoice) { settingsRow("Pip's voice", systemImage: "person.wave.2") }
+            NavigationLink(value: Route.voiceStudio) { settingsRow("Record Pip's voice (warmest)", systemImage: "mic.badge.plus") }
+            NavigationLink(value: Route.pipVoice) { settingsRow("Choose an iPhone voice for Pip", systemImage: "person.wave.2") }
             ComfortToggles()
 
             Text("Testing tools").themed(.display, 20).foregroundStyle(Theme.ink)

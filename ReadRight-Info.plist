@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Shows ReadRight's Documents folder (only Pip's voice recordings live there) in the Files app and Finder. -->
+	<key>UIFileSharingEnabled</key>
+	<true/>
+</dict>
+</plist>

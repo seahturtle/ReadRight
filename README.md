@@ -7,9 +7,9 @@ Children walk through Letterwood with Pip and visit four islands. Each island ob
 | Island | What the child does | Skill specialists look at | What the app observes |
 |---|---|---|---|
 | **Sound Springs** | Sees a picture, hears its word, taps the first letter | Letter–sound knowledge | First-try match, mirror-image (b/d) or sound-alike (b/p) mix-ups, time to first tap |
-| **Echo Cave** | Says a word without its first sound (snail → nail) | Phonemic awareness | Time from the green light to the answer, on-device word check, single sounds vs blends |
+| **Echo Cave** | Two practice puzzles, then says words without their first sound (snail → nail) | Phonemic awareness | Time from the green light to the answer, on-device word check, single sounds vs blends |
 | **Word Woods** | Reads real words and made-up creature names | Word reading and decoding (nonword reading) | Time to start reading, word check for real words, a grown-up's marks for made-up words |
-| **Firefly Dash** | Names 20 colored fireflies as fast as they can | Rapid automatized naming (RAN) | Time to first color, total naming time, whether all 20 were named |
+| **Firefly Dash** | Names 20 fireflies carrying pictures (ages 5–6) or letters (ages 7–8) as fast as they can | Rapid automatized naming (RAN) | Time to the first name, total naming time, whether all 20 were named |
 
 A **traffic light** tells the child when to talk. Amber ("Get ready…") means the microphone is learning the room's quiet. Green ("Your turn!") means the word is on screen and timing has started.
 
@@ -30,7 +30,7 @@ Built for the 2026 Congressional App Challenge (CA-10). The design comes from th
 4. Plug the iPhone in, choose it at the top of Xcode, and press ⌘R.
 5. The first time, trust the developer: Settings → General → VPN & Device Management.
 
-**Tests.** Press ⌘U. There are 34 test cases: the voice-onset detector (including the traffic light), loudness math, word matching, item lists, the data store, and the family summary's rules.
+**Tests.** Press ⌘U. There are 37 test cases: the voice-onset detector (including the traffic light), loudness math, word matching, item lists, Echo Cave practice, the recording catalog, the data store, and the family summary's rules.
 
 **Testing flags** (Edit Scheme → Run → Arguments):
 - `-skipSetup` skips the grown-up setup.
@@ -41,7 +41,9 @@ Built for the 2026 Congressional App Challenge (CA-10). The design comes from th
 
 ## Make Pip sound friendlier
 
-The built-in "standard" voices can sound robotic. On the iPhone, download a free Premium voice: Settings → Accessibility → Spoken Content → Voices → English → pick **Zoe** or **Ava** → Premium. (On newer iPhones the menu may be called Read & Speak.) Then in ReadRight, open Grownups → Settings → **Pip's voice** and choose it. ReadRight picks the best installed voice automatically, and leaves out novelty voices.
+**Best: record Pip yourselves.** Grown-ups → Settings → **Record Pip's voice**. Every line Pip says is listed, with Record and Play buttons. Silence before and after each take is trimmed automatically. Any line you don't record uses the iPhone voice. Recordings are kept in Files → On My iPhone → ReadRight → PipVoice. To ship them inside the app, connect the iPhone, open it in Finder → Files → ReadRight, and drag the PipVoice folder into the `ReadRight/` folder of this project.
+
+**Otherwise, a better iPhone voice.** The built-in "standard" voices can sound robotic. On the iPhone, download a free Premium voice: Settings → Accessibility → Spoken Content → Voices → English → pick **Zoe** or **Ava** → Premium. (On newer iPhones the menu may be called Read & Speak.) Then in ReadRight, open Grown-ups → Settings → **Choose an iPhone voice for Pip** and select it. ReadRight picks the best installed voice automatically, and leaves out novelty voices.
 
 ## Check that listening works (5 minutes)
 
@@ -64,6 +66,7 @@ The Congressional App Challenge rules allow AI tools if **all AI use is disclose
 | `Models/`, tests, Xcode project | Claude Code, Oct 25 |
 | **Grown-up gate** (`Grownups/ParentGateView.swift`) | Team (TODO) |
 | **Privacy page** (`Grownups/PrivacyView.swift`), in your own words | Team (TODO) |
+| **Pip's recorded voice** (Voice Studio) | Team (TODO) |
 | App icon; testing on real iPhones and tuning; the demo video; the written answers | Team (TODO) |
 
 Find every team task with Find in Project (⌘⇧F) → `TODO(team)`.
@@ -76,6 +79,7 @@ Keep adding to this. Short and honest is better than vague.
 - **2026-10-25, Claude Code:** researched the CAC rules and past CA-10 winners, wrote the build plan, ran a security and privacy review.
 - **2026-10-25, Claude Code:** wrote the audio engine, the first three games, the data store, testing screens, tests and the Xcode project. Ran an automated code review and fixed what it found.
 - **2026-10-25, Claude Code:** redesigned the app to match the prototype. Added the traffic light, the Echo Cave and made-up-word activities, the family summary, research and settings, and a friendlier voice picker. Researched dyslexia indicators with sources.
+- **2026-10-25, Claude Code:** replaced Pip with a gentler firefly design. Added the Voice Studio for recording Pip's lines, Echo Cave practice puzzles, more made-up words, a fourth letter choice, pictures and letters instead of colors in Firefly Dash, and an "At a glance" summary. Saved the first git version.
 - *(add your entries: what you asked, what you used, what you changed)*
 
 ## Privacy design
@@ -92,4 +96,4 @@ Keep adding to this. Short and honest is better than vague.
 - Nothing has been checked against professional assessments. These are observations, not a test, and there are no age norms.
 - English only. Word lists should be reviewed by a teacher or reading specialist.
 - Speech recognizers are trained mostly on adult voices, which is why a mismatch counts as "unclear" and isn't counted.
-- Firefly Dash uses colors, which can be hard for color-blind children.
+- One Firefly Dash per visit. Real rapid-naming tests average two tries.

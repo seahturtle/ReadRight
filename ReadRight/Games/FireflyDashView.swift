@@ -17,17 +17,17 @@ struct FireflyDashView: View {
         GameScaffold(activity: .fireflyDash, listening: engine.isListening) {
             switch model.phase {
             case .intro:
-                PipSays("My fireflies glow in different colors. Say each color out loud, as fast as you can!")
+                PipSays(PipLines.fireflyIntro(profiles.profile.ageBand))
                 Button("Practice first") { Task { await model.practice() } }
                     .buttonStyle(ChunkyButtonStyle(fill: Theme.mint, size: 22))
 
             case .practice:
-                PipSays("Say these colors out loud. Start at the arrow and go this way.")
+                PipSays("Say these out loud. Start at the arrow and go this way.")
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.right")
                         .font(.title2.bold())
                         .foregroundStyle(Theme.ink)
-                    FireflyRow(colors: model.practiceColors)
+                    FireflyRow(items: model.practiceItems)
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity)
@@ -36,7 +36,7 @@ struct FireflyDashView: View {
                     .buttonStyle(ChunkyButtonStyle(fill: Theme.sun, size: 22))
 
             case .ready:
-                PipSays("Tap Go. When the light turns green, all my fireflies come out. Say every color, row by row, then tap I'm done!")
+                PipSays("Tap Go. When the light turns green, all my fireflies come out. Say every one, row by row, then tap I'm done!")
                 Button("Go!") { model.go(listeningAllowed: profiles.profile.listenToReading) }
                     .buttonStyle(ChunkyButtonStyle(fill: Theme.mint, size: 26))
 
@@ -44,11 +44,11 @@ struct FireflyDashView: View {
                 TalkLight(
                     state: model.talkState,
                     levelDB: engine.levelDB,
-                    speakNowText: "Go! Say the colors.",
+                    speakNowText: "Go! Say them all.",
                     offText: "Grown-up timer is running."
                 )
                 if model.phase == .naming {
-                    FireflyGrid(colors: model.grid, columns: ItemBank.fireflyColumns)
+                    FireflyGrid(items: model.grid, columns: ItemBank.fireflyColumns)
                     Button("I'm done") { model.done() }
                         .buttonStyle(ChunkyButtonStyle(fill: Theme.sun, size: 22))
                 } else {
@@ -93,7 +93,7 @@ struct FireflyDashView: View {
                 )
             }
         }
-        .onAppear { model.attach(store: store, engine: engine) }
+        .onAppear { model.attach(store: store, engine: engine, age: profiles.profile.ageBand) }
         .task {
             if AppFlags.autostart { model.go(listeningAllowed: profiles.profile.listenToReading) } else { await model.introduce() }
         }
@@ -117,8 +117,9 @@ final class FireflyDashModel {
         case voice, grownUpTimer
     }
 
-    let grid = ItemBank.fireflyGrid
-    let practiceColors = ItemBank.fireflyPractice
+    private(set) var grid = ItemBank.fireflyGrid(for: .fiveToSix)
+    private(set) var practiceItems = ItemBank.fireflyPractice(for: .fiveToSix)
+    @ObservationIgnored private var age = Profile.AgeBand.fiveToSix
     private(set) var phase: Phase = .intro
     private(set) var mode: Mode = .grownUpTimer
     private(set) var onsetMs: Int?
@@ -149,26 +150,29 @@ final class FireflyDashModel {
         }
     }
 
-    func attach(store: ObservationStore, engine: ListeningEngine) {
+    func attach(store: ObservationStore, engine: ListeningEngine, age: Profile.AgeBand) {
         self.store = store
         self.engine = engine
+        self.age = age
+        grid = ItemBank.fireflyGrid(for: age)
+        practiceItems = ItemBank.fireflyPractice(for: age)
         isActive = true
     }
 
     func introduce() async {
-        await speaker.say("My fireflies glow in different colors. Say each color out loud, as fast as you can!")
+        await speaker.say(PipLines.fireflyIntro(age))
     }
 
     func practice() async {
         guard phase == .intro else { return }
         phase = .practice
-        await speaker.say("Say these colors out loud. Start at the arrow.")
+        await speaker.say(PipLines.fireflyPractice)
     }
 
     func getReady() async {
         guard phase == .practice else { return }
         phase = .ready
-        await speaker.say("Tap Go. When the light turns green, say every color, row by row.")
+        await speaker.say(PipLines.fireflyReady)
     }
 
     func go(listeningAllowed: Bool) {
@@ -224,7 +228,7 @@ final class FireflyDashModel {
         guard phase == .grownUpCheck else { return }
         phase = .finished
         record(answer)
-        await speaker.say("All my fireflies are glowing. Thank you!")
+        await speaker.say(PipLines.fireflyDone)
     }
 
     func leave() {
@@ -288,7 +292,7 @@ final class FireflyDashModel {
 
     private func record(_ answer: NamedAll) {
         guard let store else { return }
-        var observation = ItemObservation(sessionID: store.sessionID, activity: .fireflyDash, itemID: "fd-grid-1", target: "20 colors")
+        var observation = ItemObservation(sessionID: store.sessionID, activity: .fireflyDash, itemID: age == .fiveToSix ? "fd-pictures" : "fd-letters", target: age == .fiveToSix ? "20 pictures" : "20 letters")
         observation.onsetMs = mode == .voice ? onsetMs : nil
         observation.namingMs = namingMs
         observation.namedAll = answer
@@ -297,49 +301,60 @@ final class FireflyDashModel {
     }
 }
 
+/// A firefly carrying a picture (ages 5–6) or a letter (ages 7–8).
+/// Every firefly is the same color, so color never matters, which is fair to color-blind children.
 struct FireflyDot: View {
-    let color: FireflyColor
-    var size: CGFloat = 52
+    let item: NamingItem
+    var size: CGFloat = 54
 
     var body: some View {
         ZStack {
             HStack(spacing: size * 0.05) {
-                Ellipse().fill(Color.white).overlay(Ellipse().strokeBorder(Theme.ink, lineWidth: 2)).frame(width: size * 0.34, height: size * 0.24)
-                Ellipse().fill(Color.white).overlay(Ellipse().strokeBorder(Theme.ink, lineWidth: 2)).frame(width: size * 0.34, height: size * 0.24)
+                Ellipse().fill(Color.white).overlay(Ellipse().strokeBorder(Theme.ink.opacity(0.6), lineWidth: 1.5)).frame(width: size * 0.34, height: size * 0.24)
+                Ellipse().fill(Color.white).overlay(Ellipse().strokeBorder(Theme.ink.opacity(0.6), lineWidth: 1.5)).frame(width: size * 0.34, height: size * 0.24)
             }
-            .offset(y: -size * 0.3)
+            .offset(y: -size * 0.32)
             Circle()
-                .fill(color.swatch)
+                .fill(Color(hex: 0xFFF1C4))
                 .overlay(Circle().strokeBorder(Theme.ink, lineWidth: 2.5))
-                .frame(width: size * 0.7, height: size * 0.7)
-                .shadow(color: color.glow, radius: size * 0.14)
+                .frame(width: size * 0.78, height: size * 0.78)
+                .shadow(color: Theme.sun.opacity(0.7), radius: size * 0.12)
+            if let symbol = item.symbol {
+                Image(systemName: symbol)
+                    .font(.system(size: size * 0.36, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+            } else {
+                Text(item.rawValue)
+                    .themed(.reading, size * 0.46)
+                    .foregroundStyle(Theme.ink)
+            }
         }
         .frame(width: size, height: size)
         .accessibilityElement()
-        .accessibilityLabel("\(color.rawValue) firefly")
+        .accessibilityLabel(item.isLetter ? "letter \(item.rawValue)" : item.rawValue)
     }
 }
 
 struct FireflyRow: View {
-    let colors: [FireflyColor]
+    let items: [NamingItem]
 
     var body: some View {
         HStack(spacing: 6) {
-            ForEach(colors.indices, id: \.self) { index in
-                FireflyDot(color: colors[index], size: 48)
+            ForEach(items.indices, id: \.self) { index in
+                FireflyDot(item: items[index], size: 48)
             }
         }
     }
 }
 
 struct FireflyGrid: View {
-    let colors: [FireflyColor]
+    let items: [NamingItem]
     let columns: Int
 
     var body: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: columns), spacing: 12) {
-            ForEach(colors.indices, id: \.self) { index in
-                FireflyDot(color: colors[index], size: 52)
+            ForEach(items.indices, id: \.self) { index in
+                FireflyDot(item: items[index], size: 56)
             }
         }
         .padding(14)
@@ -348,21 +363,5 @@ struct FireflyGrid: View {
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.mintDark, lineWidth: 5))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Twenty fireflies in four rows")
-    }
-}
-
-extension FireflyColor {
-    var swatch: Color {
-        switch self {
-        case .red: Color(hex: 0xD93A33)
-        case .blue: Color(hex: 0x2666D9)
-        case .green: Color(hex: 0x21994D)
-        case .yellow: Color(hex: 0xFACC1A)
-        case .black: Color(hex: 0x1A1A1F)
-        }
-    }
-
-    var glow: Color {
-        self == .black ? .clear : swatch.opacity(0.6)
     }
 }

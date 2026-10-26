@@ -16,22 +16,23 @@ struct SpeakingGameConfig {
     static func wordWoods(_ age: Profile.AgeBand) -> SpeakingGameConfig {
         SpeakingGameConfig(
             activity: .wordWoods,
-            intro: "Let's read some words out loud. Wait for the green light, then read the word to me. Any way you say it is fine!",
+            intro: PipLines.wordWoodsIntro,
             items: ItemBank.wordWoods(for: age),
             speakNowText: "Your turn! Read it now.",
             offText: "Read it to your grown-up.",
-            doneLine: "Word Woods visited! You read the whole path. Every firefly counts."
+            doneLine: PipLines.wordWoodsDone
         )
     }
 
     static func echoCave(_ age: Profile.AgeBand) -> SpeakingGameConfig {
         SpeakingGameConfig(
             activity: .echoCave,
-            intro: "In Echo Cave, the echo forgets the first sound of words! \(ItemBank.echoCaveExample) Wait for the green light, then say what's left.",
-            items: ItemBank.echoCave(for: age),
+            intro: PipLines.echoCaveIntro,
+            // Two practice puzzles first, so children learn the game before anything is recorded.
+            items: ItemBank.echoCavePractice + ItemBank.echoCave(for: age),
             speakNowText: "Your turn! Say it now.",
             offText: "Tell your grown-up your answer.",
-            doneLine: "Echo Cave visited! Those were tricky sound puzzles. Every firefly counts."
+            doneLine: PipLines.echoCaveDone
         )
     }
 }
@@ -85,6 +86,7 @@ struct SpeakingGameView: View {
                 PipSays(model.bubble, mood: model.phase == .result ? .happy : .listening)
                 TalkLight(state: model.talkState, levelDB: engine.levelDB, speakNowText: config.speakNowText, offText: config.offText)
                 if config.activity == .echoCave {
+                    if model.item.isPractice { Eyebrow(text: "Practice puzzle") }
                     EchoCard(green: model.talkState == .speakNow || model.talkState == .hearing)
                     Button {
                         model.replayPrompt()
@@ -103,7 +105,9 @@ struct SpeakingGameView: View {
                 if model.isWaitingForNext {
                     Button("Hop on") { model.next() }
                         .buttonStyle(ChunkyButtonStyle(fill: Theme.sun, size: 22))
-                    GrownUpCheck(mark: $model.grownUpMark, title: model.checkTitle, detail: model.checkDetail)
+                    if !model.item.isPractice {
+                        GrownUpCheck(mark: $model.grownUpMark, title: model.checkTitle, detail: model.checkDetail)
+                    }
                 }
                 if showDetails {
                     ListeningDetails(
@@ -245,7 +249,7 @@ final class SpeakingGameModel {
             else { "Read this word to me." }
         case .hearing: "I hear you!"
         case .thinking: "Hmm, let me think…"
-        case .result: "You lit a firefly!"
+        case .result: item.isPractice ? "Nice practicing!" : "You lit a firefly!"
         case .askGrownUp(.noVoiceHeard): "I didn't hear anything that time. That's okay!"
         case .askGrownUp(.listeningOff):
             config.activity == .echoCave ? "Say your answer out loud!" : "Read it out loud for your grown-up!"
@@ -303,12 +307,13 @@ final class SpeakingGameModel {
         guard isWaitingForNext else { return }
         if let lastAdvance, ContinuousClock.now - lastAdvance < .milliseconds(700) { return }
         lastAdvance = .now
-        record()
+        let wasPractice = item.isPractice
+        if !wasPractice { record() }
         lit += 1
         replays = 0
         if index + 1 < config.items.count {
             index += 1
-            present()
+            present(preface: wasPractice && !item.isPractice ? PipLines.echoCaveRealStart : nil)
         } else {
             engine?.stop()
             phase = .finished
@@ -333,7 +338,7 @@ final class SpeakingGameModel {
         }
     }
 
-    private func present() {
+    private func present(preface: String? = nil) {
         token += 1
         let current = token
         onsetMs = nil
@@ -342,11 +347,16 @@ final class SpeakingGameModel {
         noiseFloorDB = nil
         thresholdDB = nil
         // Leave the "waiting for Next" state right away, so a second tap can't act on this item.
-        phase = item.prompt != nil ? .pipSpeaking : .getReady
-        Task { await runItem(current) }
+        phase = item.prompt != nil || preface != nil ? .pipSpeaking : .getReady
+        Task { await runItem(current, preface: preface) }
     }
 
-    private func runItem(_ current: Int) async {
+    private func runItem(_ current: Int, preface: String? = nil) async {
+        if let preface {
+            phase = .pipSpeaking
+            await speaker.say(preface)
+            guard isActive, current == token else { return }
+        }
         if let prompt = item.prompt {
             phase = .pipSpeaking
             await speaker.say(prompt, essential: true)
@@ -376,6 +386,10 @@ final class SpeakingGameModel {
         onsetMs = outcome.onsetMs
         wordCheck = outcome.wordCheck
         phase = outcome.wordCheck == .noResponse ? .askGrownUp(.noVoiceHeard) : .result
+        if item.isPractice {
+            // Practice: Pip says the answer, so the child learns how the puzzle works.
+            await speaker.say(PipLines.echoCavePracticeAnswer(item.spoken, item.target), essential: true)
+        }
     }
 
     private func startListening(_ engine: ListeningEngine) -> Bool {

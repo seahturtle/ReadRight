@@ -83,13 +83,11 @@ struct IslandArt: View {
     private static func drawFireflies(in context: inout GraphicsContext) {
         outlined(triangle(CGPoint(x: 84, y: 18), CGPoint(x: 40, y: 64), CGPoint(x: 124, y: 64)), Theme.hill2, 3.5, in: &context)
         outlined(triangle(CGPoint(x: 132, y: 32), CGPoint(x: 96, y: 64), CGPoint(x: 168, y: 64)), Theme.hill1, 3.5, in: &context)
-        let dots: [(CGPoint, FireflyColor)] = [
-            (CGPoint(x: 60, y: 22), .red), (CGPoint(x: 110, y: 12), .blue), (CGPoint(x: 150, y: 20), .yellow), (CGPoint(x: 172, y: 40), .green),
-        ]
-        for (point, color) in dots {
+        // Glowing fireflies over the hills.
+        for point in [CGPoint(x: 60, y: 22), CGPoint(x: 110, y: 12), CGPoint(x: 150, y: 20), CGPoint(x: 172, y: 40)] {
             let rect = CGRect(x: point.x - 6, y: point.y - 6, width: 12, height: 12)
-            context.fill(Path(ellipseIn: rect.insetBy(dx: -4, dy: -4)), with: .color(color.swatch.opacity(0.25)))
-            outlined(Path(ellipseIn: rect), color.swatch, 2, in: &context)
+            context.fill(Path(ellipseIn: rect.insetBy(dx: -5, dy: -5)), with: .color(Theme.sun.opacity(0.35)))
+            outlined(Path(ellipseIn: rect), Theme.sun, 2, in: &context)
         }
     }
 

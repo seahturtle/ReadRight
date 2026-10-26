@@ -56,7 +56,7 @@ struct PipVoiceView: View {
     /// Hearing a voice doesn't choose it. Tapping the voice's name does.
     private func preview(_ voice: AVSpeechSynthesisVoice) {
         Task {
-            await Speaker.shared.say("Hi, I'm Pip! Let's walk through Letterwood together.", essential: true, voice: voice)
+            await Speaker.shared.say(PipLines.voicePreview, essential: true, voice: voice)
         }
     }
 }
