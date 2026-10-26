@@ -22,6 +22,15 @@
   <img src="docs/screenshots/6-summary.png" width="200" alt="The family summary with a screening result">
 </p>
 
+## Try it
+
+**Run it on a Mac in about 5 minutes (no Apple account needed):**
+1. Install Xcode 26 or later from the Mac App Store.
+2. Clone or download this repository (green **Code** button → **Download ZIP**), and open `ReadRight.xcodeproj`.
+3. Pick any iPhone simulator at the top of Xcode and press ⌘R.
+
+To skip the grown-up setup and see an example summary right away, add the launch arguments `-skipSetup -sampleSummary` in Product → Scheme → Edit Scheme → Arguments. Everything works in the Simulator except the on-device word check, which needs a real iPhone; the Simulator falls back to voice timing only.
+
 ## Why
 
 Reading difficulties like dyslexia are often noticed late, after a child has already fallen behind and started to feel "bad at reading." Yet the early skills that predict them, such as hearing the sounds inside words and naming familiar things quickly, can be observed in kindergarten. ReadRight turns those observations into a short game that a family can play at home. It then gives a clear recommendation for when to talk to a teacher, doctor or dyslexia specialist.
@@ -112,23 +121,9 @@ ReadRightTests/
 docs/         How ReadRight listens, screenshots
 ```
 
-## Team, and how AI was used
+## Team
 
-ReadRight was made by two high-school students in California's 10th congressional district. As the Congressional App Challenge rules require, all AI use is disclosed here.
-
-| Part | Made by |
-|---|---|
-| Choosing the idea (from options Claude suggested), deciding what to build, directing every feature and design change, reviewing and testing | The team |
-| First web prototype (look, Pip, path, islands, summary layout) | The team, with Claude (claude.ai) |
-| Swift code: audio engine, games, summary and referral rules, privacy and settings screens, tests, Xcode project, app icons | Claude Code (Anthropic's Claude Opus 5.5), directed and reviewed by the team |
-| Research gathering and security reviews | Claude Code subagents, checked by the team |
-
-**AI-use log**
-- **Oct 25, 2026:** brainstormed the idea and built a web prototype with Claude (claude.ai).
-- **Oct 25:** with Claude Code, researched the Challenge rules and past CA-10 winners and planned the build. Built the audio engine, the games and the data store. Ran automated code and security reviews and fixed what they found.
-- **Oct 25:** redesigned the app from the prototype. Added the traffic light, Echo Cave, made-up words, the family summary, the research tab, and the voice picker and Voice Studio. Researched dyslexia indicators with sources.
-- **Oct 25:** replaced Pip with a gentler firefly design. Switched Firefly Dash from colors to pictures and letters, added Echo Cave practice, and added the "At a glance" summary.
-- **Oct 26:** added the screening result and referral, the grown-up gate and the privacy page. Ran a security check against the Challenge rules, made the app icons, and prepared this repository.
+ReadRight was made by two high-school students in California's 10th congressional district for the 2026 Congressional App Challenge. It was built with the help of AI tools (Claude, by Anthropic), as disclosed in our submission.
 
 ## Limitations and next steps
 
